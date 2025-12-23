@@ -19,6 +19,30 @@ const CanvasBoard = ({ color, brushSize }) => {
     ctxRef.current = ctx;
   }, [color, brushSize]);
 
+  useEffect(() => {
+    socket.on("draw-start", ({ x, y }) => {
+      ctxRef.current.beginPath();
+      ctxRef.current.moveTo(x, y);
+    });
+
+    socket.on("drawing", ({ x, y, color, brushSize }) => {
+      ctxRef.current.strokeStyle = color;
+      ctxRef.current.lineWidth = brushSize;
+      ctxRef.current.lineTo(x, y);
+      ctxRef.current.stroke();
+    });
+
+    socket.on("draw-end", () => {
+      ctxRef.current.closePath();
+    });
+
+    return () => {
+      socket.off("draw-start");
+      socket.off("drawing");
+      socket.off("draw-end");
+    };
+  }, []);
+
   const startDrawing = (e) => {
     const { offsetX, offsetY } = e.nativeEvent;
     ctxRef.current.beginPath();
